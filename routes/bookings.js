@@ -623,4 +623,13 @@ router.post('/test-email', async (req, res) => {
   }
 });
 
+// Simple test endpoint
+router.get('/test', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Bookings route is working!',
+    timestamp: new Date().toISOString()
+  });
+});
+
 module.exports = router;
