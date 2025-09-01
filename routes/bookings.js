@@ -2,6 +2,70 @@ const express = require('express');
 const { query, getRow, run } = require('../config/database');
 const router = express.Router();
 
+// Email sending function
+const sendBookingEmails = async (bookingData) => {
+  try {
+    console.log('📧 Starting email sending process...');
+    
+    // EmailJS configuration
+    const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID;
+    const EMAILJS_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID;
+    const EMAILJS_USER_ID = process.env.EMAILJS_USER_ID;
+    
+    if (!EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || !EMAILJS_USER_ID) {
+      console.log('⚠️ EmailJS environment variables not configured, skipping email sending');
+      return { success: false, error: 'EmailJS not configured' };
+    }
+    
+    // Prepare email template data
+    const emailTemplate = {
+      to_email: bookingData.guest_email,
+      to_name: bookingData.guest_name,
+      booking_reference: bookingData.booking_reference,
+      cottage_name: bookingData.cottage_name,
+      check_in_date: bookingData.check_in_date,
+      check_out_date: bookingData.check_out_date,
+      total_amount: bookingData.total_amount,
+      adults: bookingData.adults,
+      children: bookingData.children,
+      package_name: bookingData.package_name || 'Standard Package',
+      special_requests: bookingData.special_requests || 'None',
+      resort_name: 'Village Machaan Resort',
+      resort_phone: '+91-7462-252052',
+      resort_email: 'villagemachaan@gmail.com'
+    };
+    
+    console.log('📧 Sending booking confirmation email...');
+    
+    // Send email via EmailJS
+    const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        service_id: EMAILJS_SERVICE_ID,
+        template_id: EMAILJS_TEMPLATE_ID,
+        user_id: EMAILJS_USER_ID,
+        template_params: emailTemplate
+      })
+    });
+
+    const result = await response.json();
+    console.log('📧 EmailJS API Response:', result);
+    
+    if (response.ok && result.status === 200) {
+      console.log('✅ Booking confirmation email sent successfully!');
+      return { success: true, message: 'Email sent successfully' };
+    } else {
+      console.error('❌ EmailJS API error:', result);
+      return { success: false, error: result.text || 'EmailJS API error' };
+    }
+    
+  } catch (error) {
+    console.error('❌ Email sending failed:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 // Helper function to generate booking reference
 function generateBookingReference() {
   const prefix = 'VM';
@@ -125,6 +189,33 @@ router.post('/', async (req, res) => {
        WHERE sb.booking_id = ?`,
       [bookingId]
     );
+
+    // Send confirmation email (non-blocking)
+    try {
+      const emailData = {
+        guest_email: guestDetails.email,
+        guest_name: guestDetails.name || `${guestDetails.firstName} ${guestDetails.lastName}`,
+        booking_reference: bookingReference,
+        cottage_name: completeBooking.cottage_name,
+        check_in_date: checkIn,
+        check_out_date: checkOut,
+        total_amount: totalAmount,
+        adults: adults,
+        children: children,
+        package_name: completeBooking.package_name,
+        special_requests: specialRequests
+      };
+      
+      // Send email in background (don't wait for it)
+      sendBookingEmails(emailData).then(result => {
+        console.log('📧 Email sending result:', result);
+      }).catch(error => {
+        console.error('❌ Email sending error:', error);
+      });
+    } catch (emailError) {
+      console.error('❌ Email sending failed:', emailError);
+      // Don't fail the booking if email fails
+    }
 
     // Emit real-time notification to admin
     if (req.io) {
