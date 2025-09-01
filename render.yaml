@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: village-machaan-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        value: sqlite://./data/village_machaan.db
+      - key: JWT_SECRET
+        generateValue: true
+      - key: EMAILJS_SERVICE_ID
+        sync: false
+      - key: EMAILJS_TEMPLATE_ID
+        sync: false
+      - key: EMAILJS_USER_ID
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false

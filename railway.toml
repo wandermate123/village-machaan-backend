@@ -1,0 +1,23 @@
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+healthcheckPath = "/api/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+
+[[services]]
+name = "backend"
+
+[services.build]
+buildCommand = "npm install"
+
+[services.deploy]
+startCommand = "npm start"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 300
+
+[services.variables]
+NODE_ENV = "production"
+PORT = "$PORT"
+
