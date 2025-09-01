@@ -95,17 +95,22 @@ router.post('/', async (req, res) => {
 
     // Validate required fields
     if (!cottageType || !checkIn || !checkOut || !adults || !guestDetails || !totalAmount) {
+      console.log('❌ Missing required fields');
       return res.status(400).json({
         success: false,
         error: 'Missing required booking information'
       });
     }
 
+    console.log('✅ All required fields present, proceeding with booking creation...');
+
     // Get cottage by type
+    console.log('🔍 Looking for cottage with type:', cottageType);
     const cottage = await getRow(
       'SELECT * FROM cottages WHERE type = ? AND is_active = 1',
       [cottageType]
     );
+    console.log('🏠 Found cottage:', cottage ? cottage.name : 'Not found');
 
     if (!cottage) {
       return res.status(404).json({
@@ -239,10 +244,12 @@ router.post('/', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error creating booking:', error);
+    console.error('❌ Booking creation error:', error);
+    console.error('❌ Error stack:', error.stack);
     res.status(500).json({
       success: false,
-      error: 'Failed to create booking'
+      error: 'Failed to create booking',
+      details: error.message
     });
   }
 });
