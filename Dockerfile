@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production
+RUN npm ci
 
 # Copy application code
 COPY . .
@@ -18,6 +18,9 @@ RUN mkdir -p logs
 
 # Create data directory for SQLite
 RUN mkdir -p data
+
+# Initialize database
+RUN npm run init-db
 
 # Expose port
 EXPOSE 5000

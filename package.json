@@ -9,8 +9,7 @@
     "build": "npm install && node scripts/init-sqlite.js",
     "init-db": "node scripts/init-sqlite.js",
     "create-admin": "node scripts/create-admin-simple.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "node scripts/init-sqlite.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "booking",
