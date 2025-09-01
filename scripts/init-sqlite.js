@@ -1,6 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
+const bcrypt = require('bcryptjs');
 
 console.log('🚀 Starting SQLite database initialization...');
 
@@ -208,11 +209,19 @@ async function insertSampleData() {
       ('Night Safari', 'Nocturnal wildlife adventure', '2.5 hours', 900, 4, '["Professional Guide", "Safari Vehicle", "Flashlights"]', '["Nocturnal animals", "Unique experience", "Adventure"]', '["19:00", "19:30", "20:00"]')
     `);
 
-    // Create default admin user
+    // Create default admin user with proper password hash
+    const adminPassword = 'admin123'; // Default password
+    const saltRounds = 12;
+    const passwordHash = await bcrypt.hash(adminPassword, saltRounds);
+    
     await runQuery(`
       INSERT INTO users (name, email, password, role)
-      VALUES ('Admin', 'admin@villagemachaan.com', '$2a$10$2qKjq5QZ5QZ5QZ5QZ5QZ5O', 'admin')
-    `);
+      VALUES ('Admin', 'admin@villagemachaan.com', ?, 'admin')
+    `, [passwordHash]);
+    
+    console.log('🔑 Admin user created with credentials:');
+    console.log('   Email: admin@villagemachaan.com');
+    console.log('   Password: admin123');
 
     console.log('✅ Sample data inserted successfully');
   } catch (error) {
