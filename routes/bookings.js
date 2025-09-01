@@ -76,6 +76,8 @@ function generateBookingReference() {
 
 // Create new booking
 router.post('/', async (req, res) => {
+  console.log('📝 POST /api/bookings - Booking creation request received');
+  console.log('📝 Request body:', JSON.stringify(req.body, null, 2));
   try {
     const {
       cottageType,
