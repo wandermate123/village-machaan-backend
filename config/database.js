@@ -4,7 +4,7 @@ const fs = require('fs');
 
 // Check if running on Vercel (serverless) vs Render (persistent)
 const isVercel = process.env.VERCEL;
-const isRender = process.env.RENDER;
+const isRender = process.env.RENDER || process.env.NODE_ENV === 'production' || process.env.PORT === '10000';
 
 let database;
 
@@ -31,6 +31,7 @@ if (isVercel) {
   const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, '..', 'data', 'village_machaan.db');
   
   console.log('🔄 Using persistent SQLite database:', DB_PATH);
+  console.log('🔍 Environment check - isVercel:', isVercel, 'isRender:', isRender);
   
   // Ensure data directory exists
   const dataDir = path.dirname(DB_PATH);
