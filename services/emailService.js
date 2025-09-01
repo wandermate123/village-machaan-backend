@@ -79,22 +79,34 @@ class EmailService {
 
       console.log('📧 EmailJS API Response Status:', response.status);
 
-      const result = await response.json();
-      console.log('📧 EmailJS API Response:', result);
+      // Get raw response text first to handle non-JSON responses
+      const responseText = await response.text();
+      console.log('📧 EmailJS API Raw Response:', responseText);
 
-      if (response.ok && result.status === 200) {
+      let result;
+      try {
+        result = JSON.parse(responseText);
+        console.log('📧 EmailJS API Parsed Response:', result);
+      } catch (parseError) {
+        console.log('📧 EmailJS returned non-JSON response, treating as plain text');
+        result = { text: responseText, status: response.status };
+      }
+
+      if (response.ok && (result.status === 200 || result.text === 'OK' || responseText === 'OK')) {
         console.log('✅ Booking confirmation email sent successfully!');
         return {
           success: true,
           message: 'Email sent successfully',
-          emailId: result.email_id || 'unknown'
+          emailId: result.email_id || 'unknown',
+          rawResponse: responseText
         };
       } else {
         console.error('❌ EmailJS API error:', result);
         return {
           success: false,
           error: result.text || result.error || 'EmailJS API error',
-          details: result
+          details: result,
+          rawResponse: responseText
         };
       }
 
