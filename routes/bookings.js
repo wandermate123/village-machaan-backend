@@ -1,69 +1,12 @@
 const express = require('express');
 const { query, getRow, getRows, run } = require('../config/database');
+const emailService = require('../services/emailService');
 const router = express.Router();
 
-// Email sending function
+// Simple email sending function using the new email service
 const sendBookingEmails = async (bookingData) => {
-  try {
-    console.log('📧 Starting email sending process...');
-    
-    // EmailJS configuration
-    const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID;
-    const EMAILJS_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID;
-    const EMAILJS_USER_ID = process.env.EMAILJS_USER_ID;
-    
-    if (!EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || !EMAILJS_USER_ID) {
-      console.log('⚠️ EmailJS environment variables not configured, skipping email sending');
-      return { success: false, error: 'EmailJS not configured' };
-    }
-    
-    // Prepare email template data
-    const emailTemplate = {
-      to_email: bookingData.guest_email,
-      to_name: bookingData.guest_name,
-      booking_reference: bookingData.booking_reference,
-      cottage_name: bookingData.cottage_name,
-      check_in_date: bookingData.check_in_date,
-      check_out_date: bookingData.check_out_date,
-      total_amount: bookingData.total_amount,
-      adults: bookingData.adults,
-      children: bookingData.children,
-      package_name: bookingData.package_name || 'Standard Package',
-      special_requests: bookingData.special_requests || 'None',
-      resort_name: 'Village Machaan Resort',
-      resort_phone: '+91-7462-252052',
-      resort_email: 'villagemachaan@gmail.com'
-    };
-    
-    console.log('📧 Sending booking confirmation email...');
-    
-    // Send email via EmailJS
-    const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        service_id: EMAILJS_SERVICE_ID,
-        template_id: EMAILJS_TEMPLATE_ID,
-        user_id: EMAILJS_USER_ID,
-        template_params: emailTemplate
-      })
-    });
-
-    const result = await response.json();
-    console.log('📧 EmailJS API Response:', result);
-    
-    if (response.ok && result.status === 200) {
-      console.log('✅ Booking confirmation email sent successfully!');
-      return { success: true, message: 'Email sent successfully' };
-    } else {
-      console.error('❌ EmailJS API error:', result);
-      return { success: false, error: result.text || 'EmailJS API error' };
-    }
-    
-  } catch (error) {
-    console.error('❌ Email sending failed:', error);
-    return { success: false, error: error.message };
-  }
+  console.log('📧 Sending booking confirmation email...');
+  return await emailService.sendBookingConfirmation(bookingData);
 };
 
 // Helper function to generate booking reference
@@ -639,6 +582,27 @@ router.get('/admin/stats', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch booking statistics'
+    });
+  }
+});
+
+// Test email endpoint
+router.post('/test-email', async (req, res) => {
+  try {
+    console.log('🧪 Testing email service...');
+    const result = await emailService.testEmail();
+    
+    res.json({
+      success: true,
+      message: 'Email test completed',
+      result: result
+    });
+  } catch (error) {
+    console.error('❌ Email test error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Email test failed',
+      details: error.message
     });
   }
 });
