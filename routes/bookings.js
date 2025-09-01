@@ -1,5 +1,5 @@
 const express = require('express');
-const { query, getRow, run } = require('../config/database');
+const { query, getRow, getRows, run } = require('../config/database');
 const router = express.Router();
 
 // Email sending function
@@ -113,7 +113,7 @@ router.post('/', async (req, res) => {
     }
 
     // Check availability one more time
-    const existingBookings = await query(
+    const existingBookings = await getRows(
       `SELECT * FROM bookings 
        WHERE cottage_id = ? 
        AND status IN ('confirmed', 'pending')
@@ -182,7 +182,7 @@ router.post('/', async (req, res) => {
     );
 
     // Get safari bookings
-    const safariBookings = await query(
+    const safariBookings = await getRows(
       `SELECT sb.*, st.name as safari_name, st.price
        FROM safari_bookings sb
        JOIN safari_types st ON sb.safari_type_id = st.id
@@ -268,7 +268,7 @@ router.get('/reference/:reference', async (req, res) => {
     }
 
     // Get safari bookings
-    const safariBookings = await query(
+    const safariBookings = await getRows(
       `SELECT sb.*, st.name as safari_name, st.price, st.duration
        FROM safari_bookings sb
        JOIN safari_types st ON sb.safari_type_id = st.id
@@ -509,7 +509,7 @@ router.get('/admin', async (req, res) => {
       ? `WHERE ${whereConditions.join(' AND ')}`
       : '';
 
-    const rawBookings = await query(
+    const rawBookings = await getRows(
       `SELECT b.*, c.name as cottage_name, c.type as cottage_type,
               p.name as package_name
        FROM bookings b
@@ -589,7 +589,7 @@ router.get('/admin/stats', async (req, res) => {
     `);
 
     // Get recent bookings
-    const rawRecentBookings = await query(`
+    const rawRecentBookings = await getRows(`
       SELECT b.*, c.name as cottage_name, c.type as cottage_type
       FROM bookings b
       JOIN cottages c ON b.cottage_id = c.id
