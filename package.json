@@ -6,7 +6,6 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "build": "npm install && node scripts/init-sqlite.js",
     "init-db": "node scripts/init-sqlite.js",
     "create-admin": "node scripts/create-admin-simple.js",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -37,7 +36,8 @@
     "bcryptjs": "^2.4.3",
     "express-validator": "^6.15.0",
     "dotenv": "^16.1.4",
-    "razorpay": "^2.8.6"
+    "razorpay": "^2.8.6",
+    "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
