@@ -590,7 +590,23 @@ router.get('/admin/stats', async (req, res) => {
 router.post('/test-email', async (req, res) => {
   try {
     console.log('🧪 Testing email service...');
-    const result = await emailService.testEmail();
+    
+    // Test with real data
+    const testData = {
+      guest_email: 'ayush99566@gmail.com',
+      guest_name: 'Ayush Singh',
+      booking_reference: 'TEST-123456',
+      cottage_name: 'Hornbill Villa',
+      check_in_date: '2025-09-01',
+      check_out_date: '2025-09-02',
+      total_amount: 41210,
+      adults: 1,
+      children: 0,
+      package_name: 'Standard Package',
+      special_requests: 'Test email from backend'
+    };
+    
+    const result = await emailService.sendBookingConfirmation(testData);
     
     res.json({
       success: true,
