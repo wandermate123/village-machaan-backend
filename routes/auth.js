@@ -42,14 +42,16 @@ router.post('/register', [
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
     // Create user
-    const result = await query(
-      `INSERT INTO users (email, password_hash, first_name, last_name, phone, date_of_birth)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id, email, first_name, last_name, phone, date_of_birth, created_at`,
+    const userId = await run(
+      `INSERT INTO users (email, password, first_name, last_name, phone, date_of_birth)
+       VALUES (?, ?, ?, ?, ?, ?)`,
       [email, passwordHash, firstName, lastName, phone, dateOfBirth]
     );
 
-    const user = result.rows[0];
+    const user = await getRow(
+      'SELECT id, email, first_name, last_name, phone, date_of_birth, created_at FROM users WHERE id = ?',
+      [userId]
+    );
 
     // Generate JWT token
     const token = jwt.sign(
@@ -100,7 +102,7 @@ router.post('/login', [
 
     // Find user
     const user = await getRow(
-      'SELECT * FROM users WHERE email = $1',
+      'SELECT * FROM users WHERE email = ?',
       [email]
     );
 
@@ -112,7 +114,7 @@ router.post('/login', [
     }
 
     // Check password
-    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
@@ -169,7 +171,7 @@ router.get('/profile', async (req, res) => {
     
     // Get user data
     const user = await getRow(
-      'SELECT id, email, first_name, last_name, phone, date_of_birth, created_at FROM users WHERE id = $1',
+      'SELECT id, email, first_name, last_name, phone, date_of_birth, created_at FROM users WHERE id = ?',
       [decoded.userId]
     );
 
@@ -239,19 +241,21 @@ router.put('/profile', [
     const { firstName, lastName, phone, dateOfBirth } = req.body;
 
     // Update user
-    const result = await query(
+    await run(
       `UPDATE users 
-       SET first_name = COALESCE($1, first_name),
-           last_name = COALESCE($2, last_name),
-           phone = COALESCE($3, phone),
-           date_of_birth = COALESCE($4, date_of_birth),
+       SET first_name = COALESCE(?, first_name),
+           last_name = COALESCE(?, last_name),
+           phone = COALESCE(?, phone),
+           date_of_birth = COALESCE(?, date_of_birth),
            updated_at = CURRENT_TIMESTAMP
-       WHERE id = $5
-       RETURNING id, email, first_name, last_name, phone, date_of_birth, updated_at`,
+       WHERE id = ?`,
       [firstName, lastName, phone, dateOfBirth, decoded.userId]
     );
 
-    const user = result.rows[0];
+    const user = await getRow(
+      'SELECT id, email, first_name, last_name, phone, date_of_birth, updated_at FROM users WHERE id = ?',
+      [decoded.userId]
+    );
 
     res.json({
       success: true,
@@ -312,7 +316,7 @@ router.post('/admin-login', [
     }
 
     // Check password
-    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
@@ -330,13 +334,15 @@ router.post('/admin-login', [
     res.json({
       success: true,
       message: 'Admin login successful',
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: `${user.first_name} ${user.last_name}`,
-        role: user.role,
-        is_active: user.is_active
+      data: {
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim(),
+          role: user.role,
+          is_active: user.is_active
+        }
       }
     });
   } catch (error) {
